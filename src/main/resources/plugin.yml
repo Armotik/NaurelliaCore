@@ -1,0 +1,7 @@
+name: NaurelliaCore
+version: '${project.version}'
+main: fr.armotik.naurelliacore.Naurelliacore
+api-version: 1.19
+authors: [ Armotik ]
+description: Main plugin for NaurelliaCraft
+website: naurellia.com
