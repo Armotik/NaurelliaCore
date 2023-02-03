@@ -2,6 +2,8 @@ package fr.armotik.naurelliacore;
 
 public class Louise {
 
+    private static final String name = "§7[§aLouise§7] : ";
+
     private Louise() {
         throw new IllegalStateException("Utility Class");
     }
@@ -10,7 +12,7 @@ public class Louise {
      * @return louise name
      */
     public static String getName() {
-        return "§7[§aLouise§7] : ";
+        return name;
     }
 
     /**
@@ -33,6 +35,4 @@ public class Louise {
     public static String playerNotFound() {
         return getName() + "§cUnknown player";
     }
-
-    public static String notOnline()
 }

@@ -2,6 +2,7 @@ package fr.armotik.naurelliacore;
 
 import fr.armotik.naurelliacore.listerners.EventManager;
 import fr.armotik.naurelliacore.listerners.PermissionManager;
+import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,12 +29,15 @@ public final class Naurelliacore extends JavaPlugin {
         this.getConfig().options().copyDefaults(true);
         this.saveConfig();
 
-        new WorldCreator("Earth").createWorld();
+        World world = new WorldCreator("Earth").createWorld();
+        assert (world != null);
 
         logger.log(Level.INFO, "[NaurelliaCore] -> [WorldLoad] Loaded world Earth");
 
         this.getServer().getPluginManager().registerEvents(new EventManager(), this);
         this.getServer().getPluginManager().registerEvents(new PermissionManager(), this);
+
+        logger.log(Level.INFO, "[NaurelliaCore] -> Successfully loaded NaurelliaCore");
     }
 
     @Override
