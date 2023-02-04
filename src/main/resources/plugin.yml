@@ -5,3 +5,18 @@ api-version: 1.19
 authors: [ Armotik ]
 description: Main plugin for NaurelliaCraft
 website: naurellia.com
+commands:
+  alert:
+    permission: naurellia.admin
+    description: send an alert in the server
+  earth:
+    description: teleport to the earth
+  lobby:
+    description: teleport to the lobby
+  naurelliaadmin:
+    description: manage server's permissions
+    permission: naurellia.admin
+    aliases:
+      - na
+  rank:
+    description: display player's ranks

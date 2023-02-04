@@ -1,17 +1,21 @@
 package fr.armotik.naurelliacore.utiles;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import fr.armotik.naurelliacore.Naurelliacore;
-import org.apache.commons.dbcp2.BasicDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Database {
 
-    private static BasicDataSource dataSource;
+    private static final Logger logger = Logger.getLogger(Database.class.getName());
+    private static HikariDataSource dataSource;
     private static final ThreadLocal<Connection> connection = new ThreadLocal<>();
     private static final List<String> databaseStringList = Naurelliacore.getPlugin().getConfig().getStringList("Database");
 
@@ -19,22 +23,27 @@ public class Database {
         throw new IllegalStateException("Utility Class");
     }
 
-    private static void openDataSource() {
-            dataSource = new BasicDataSource();
-            dataSource.setUrl(databaseStringList.get(0));
-            dataSource.setUsername(databaseStringList.get(1));
-            dataSource.setPassword(databaseStringList.get(3));
-            dataSource.setInitialSize(10);
-            dataSource.setMaxTotal(500);
+    private static void init() {
+        HikariConfig config = new HikariConfig();
+        config.setDriverClassName("org.mariadb.jdbc.Driver");
+        config.setJdbcUrl(databaseStringList.get(0));
+        config.setUsername(databaseStringList.get(1));
+        config.setPassword(databaseStringList.get(3));
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.setMinimumIdle(10);
+        dataSource = new HikariDataSource(config);
     }
 
     /**
      * Get new connection instance
+     *
      * @return connection instance or null in case of error
      */
     public static Connection getConnection() {
 
-        if (dataSource.isClosed()) openDataSource();
+        if (dataSource == null || dataSource.isClosed()) init();
 
         Connection conn = connection.get();
 
@@ -43,6 +52,7 @@ public class Database {
             if (conn == null) {
 
                 conn = dataSource.getConnection();
+                connection.set(conn);
             }
         } catch (SQLException e) {
 
@@ -55,6 +65,7 @@ public class Database {
 
     /**
      * Execute Query
+     *
      * @param sqlQuery query to execute
      * @return ResultSet or null in case of error
      */
@@ -65,7 +76,7 @@ public class Database {
 
         try {
             assert conn != null;
-             statement = conn.prepareStatement(sqlQuery);
+            statement = conn.prepareStatement(sqlQuery);
             return statement.executeQuery();
 
         } catch (SQLException e) {
@@ -73,7 +84,7 @@ public class Database {
             return null;
         } finally {
             try {
-                if(statement != null) statement.close();
+                if (statement != null) statement.close();
             } catch (SQLException e) {
 
                 ExceptionsManager.sqlExceptionLog(e);
@@ -83,6 +94,7 @@ public class Database {
 
     /**
      * Update Query
+     *
      * @param sqlQuery query to execute
      * @return the number new lines or -1 in case of error
      */
@@ -93,7 +105,7 @@ public class Database {
 
         try {
             assert conn != null;
-             statement = conn.prepareStatement(sqlQuery);
+            statement = conn.prepareStatement(sqlQuery);
             return statement.executeUpdate();
 
         } catch (SQLException e) {
@@ -101,7 +113,7 @@ public class Database {
             return -1;
         } finally {
             try {
-                if(statement != null) statement.close();
+                if (statement != null) statement.close();
             } catch (SQLException e) {
 
                 ExceptionsManager.sqlExceptionLog(e);
@@ -114,15 +126,17 @@ public class Database {
      */
     public static void close() {
 
+        if (dataSource == null) return;
+
         Connection conn = connection.get();
 
         try {
 
             if (conn != null) {
                 conn.close();
+                connection.remove();
             }
 
-            connection.remove();
         } catch (SQLException e) {
             ExceptionsManager.sqlExceptionLog(e);
         }
@@ -133,11 +147,42 @@ public class Database {
      */
     public static void closeAll() {
 
+        if (dataSource == null) return;
+
+        dataSource.close();
+    }
+
+    /**
+     * Test Database
+     */
+    public static void databaseTest() {
+
+        Connection conn = getConnection();
+
+        PreparedStatement statement = null;
+
         try {
-            dataSource.close();
+            assert conn != null;
+            statement = conn.prepareStatement("SELECT 2+2 as solution");
+            ResultSet res = statement.executeQuery();
+
+            if (res.next()) {
+
+                assert res.getInt("solution") == 4;
+                logger.log(Level.INFO, "[NaurelliaCore] -> Database -  Database test : OK !");
+
+                res.close();
+            }
 
         } catch (SQLException e) {
             ExceptionsManager.sqlExceptionLog(e);
+        } finally {
+            try {
+                if (statement != null) statement.close();
+            } catch (SQLException e) {
+
+                ExceptionsManager.sqlExceptionLog(e);
+            }
         }
     }
 }

@@ -2,17 +2,18 @@ package fr.armotik.naurelliacore;
 
 public class Louise {
 
-    private static final String name = "§7[§aLouise§7] : ";
+    private static final String NAME = "§7[§aLouise§7] : ";
 
     private Louise() {
         throw new IllegalStateException("Utility Class");
     }
 
     /**
-     * @return louise name
+     * @return louise NAME
      */
+
     public static String getName() {
-        return name;
+        return NAME;
     }
 
     /**
@@ -34,5 +35,12 @@ public class Louise {
      */
     public static String playerNotFound() {
         return getName() + "§cUnknown player";
+    }
+
+    /**
+     * @return command error message
+     */
+    public static String commandError() {
+        return  getName() + "§cThere was an error during the execution of the order. It could not be completed";
     }
 }

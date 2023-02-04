@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.LocalDate;
 import java.util.logging.Level;
@@ -20,6 +21,10 @@ public class EventManager implements Listener {
     private final Logger logger = Logger.getLogger(EventManager.class.getName());
     private final World world = Bukkit.getWorld("world");
 
+    /**
+     * When a player join the server
+     * @param event Player Join Event
+     */
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
 
@@ -33,6 +38,9 @@ public class EventManager implements Listener {
         player.setPlayerListHeader("\n §6§lNaurelliaCraft §7- §eMinecraft EarthRP  \n");
         player.setPlayerListFooter("\n §a§nnaurelliacraft.com \n");
 
+        /*
+        If the player didn't play before, add it in the databases
+         */
         if (!player.hasPlayedBefore()) {
 
             int req1 = Database.executeUpdate("INSERT INTO usersIG(uuid, username, joinedAt, isOnline) VALUES ('"
@@ -45,6 +53,8 @@ public class EventManager implements Listener {
                 logger.log(Level.INFO, "[NaurelliaCore] -> EventManager : PlayerJoinEvent INFO - " + player.getName() + " added to usersIG");
             }
 
+            Database.close();
+
             int req2 = Database.executeUpdate("INSERT INTO igPermissions(uuid, playerPermission, staffPermission) VALUES ('"
                     + player.getUniqueId() + "'," + null + "," + null + ");");
 
@@ -54,12 +64,30 @@ public class EventManager implements Listener {
 
                 logger.log(Level.INFO, "[NaurelliaCore] -> EventManager : PlayerJoinEvent INFO - " + player.getName() + " added to igPermissions");
             }
+
+            Database.close();
+
+            /*
+            If the player already joined the server, update the database
+             */
         } else {
 
-            PermissionManager.setupPermissions(player);
+            int req3 = Database.executeUpdate("UPDATE usersIG SET isOnline='1' WHERE uuid='" + player.getUniqueId() + "';");
+
+            if (req3 <= 0) {
+                logger.log(Level.WARNING, "[NaurelliaCore] -> EventManager : PlayerJoinEvent ERROR - req3 <= 0");
+            }
+
+            Database.close();
+
+            PermissionManager.readPermissions(player);
         }
     }
 
+    /**
+     * When a player break a block
+     * @param event Block Break Event
+     */
     @EventHandler
     public void onBreakBlock(BlockBreakEvent event) {
 
@@ -74,5 +102,19 @@ public class EventManager implements Listener {
                 event.setCancelled(true);
             }
         }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+
+        Player player = event.getPlayer();
+
+        int req = Database.executeUpdate("UPDATE usersIG SET isOnline='0' WHERE uuid='" + player.getUniqueId() + "';");
+
+        if (req <= 0) {
+            logger.log(Level.WARNING, "[NaurelliaCore] -> EventManager : PlayerQuitEvent ERROR - req <= 0");
+        }
+
+        Database.close();
     }
 }
