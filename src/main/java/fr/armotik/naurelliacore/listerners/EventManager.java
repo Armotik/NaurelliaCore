@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -100,6 +101,22 @@ public class EventManager implements Listener {
 
                 player.sendMessage(Louise.permissionMissing());
                 event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onEntityBlockChange(EntityChangeBlockEvent event) {;
+
+        if (event.getBlock().getWorld().equals(world)) {
+
+            event.setCancelled(true);
+
+            if (event.getEntity() instanceof Player) {
+
+                Player player = (Player) event.getEntity();
+
+                player.sendMessage(Louise.permissionMissing());
             }
         }
     }
